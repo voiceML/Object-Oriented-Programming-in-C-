@@ -1,0 +1,104 @@
+// Chloe Hutton, Feb 2019
+// Bohr Model
+// Program which takes inputs for atomic number and initial and final quantum numbers and calculates the transition energy, in either eV or Joules
+
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <cmath>
+
+using namespace std;
+
+// Function to calculate transition energy in eV
+double energyCalculator(int z, int n_i, int n_f){
+	double eV;
+	eV = 13.6*pow(z, 2)*(pow(n_f, -2) - pow(n_i, -2));
+	return eV;
+}
+
+// Function to test if atomic number is in the correct range
+bool range(double z){
+	if (0 < z && z < 119){
+		return false;
+	}
+	else{
+		return true;
+	}
+}
+
+// Function to test if number is an integer
+bool isInteger(double x){
+	if ((round(x) - x) == 0){
+		return false;
+	}
+	else{
+		return true;
+	}
+}
+
+// Main function
+int main()
+{
+	// A while loop to allow the user to repeat the program at the end
+	bool repeat = true;
+	while (repeat)
+	{
+		// Declare variables
+		double z, n_i, n_f;
+		string unit;
+
+		cout << "Enter an atomic number: ";
+		cin >> z;
+		// Check input is valid
+		while (range(z) || isInteger(z) || cin.fail() || cin.get() != '\n'){
+			cout << "Atomic number must be a non-zero positive integer, and of a known element. Please try again: ";
+			cin.clear(); cin.ignore(10000000, '\n'); cin >> z;
+		}
+
+		cout << "Enter initial quantum number: ";
+		cin >> n_i;
+		// Check input is valid
+		while ((n_i < 1) || isInteger(n_i) || cin.fail() || cin.get() != '\n'){
+			cout << "Initial quantum number must be a non-zero positive integer. Please try again: ";
+			cin.clear(); cin.ignore(100000000, '\n'); cin >> n_i;
+		}
+
+		cout << "Enter final quantum number: ";
+		cin >> n_f;
+		// Check input is valid
+		while ((n_f > n_i) || (n_f < 1) || isInteger(n_f) || cin.fail() || cin.get() != '\n'){
+			cout << "Final quantum number must a non-zero positive integer, and smaller than the initial quantum number. Please try again: ";
+			cin.clear(); cin.ignore(100000000, '\n'); cin >> n_f;
+		}
+
+		double eV;
+		eV = energyCalculator(z, n_i, n_f);
+
+		cout << "Would you like the transition energy in units of Joules [j] or electronvolts [e]? ";
+		cin >> unit;
+		// Check input is valid
+		while ((unit != "j") && (unit != "J") && (unit != "e") && (unit != "E")){
+			cout << "Please try again: ";
+			cin.clear(); cin.ignore(1000000000, '\n'); cin >> unit;
+		}
+
+
+		
+		// Output in Joules
+		if ((unit == "j") || (unit == "J")){
+			cout << "The transition energy is " << eV*(1.6e-19) << " J." << endl;
+		}
+		// Output in eV
+		else if ((unit == "e") || (unit == "E")){
+			cout << "The transition energy is " << eV << " eV." << endl;
+		}
+
+		// Asks if user would like to repeat
+		cout << "Would you like to make another calculation? [y/n] ";
+		string answer;
+		cin >> answer;
+		repeat = answer == "y";
+	}
+	cout << "Goodbye" << endl;
+	return 0;
+}
