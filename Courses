@@ -1,0 +1,184 @@
+// Program which stores and prints a list of physics courses given by the user. Can sort list by course code or name, and give courses belonging to a certain year
+
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Check the first part of the input is a 5-digit integer
+bool codecheck(string input){
+	if (input.length() > 5){
+		int digitnumber = 0;
+		for (int i = 0; i < 5; i++){
+			if (isdigit(input.at(i)) != 0){
+				digitnumber++;
+			}
+		}
+		if (digitnumber == 5){
+			return true;
+		}
+		else{
+			return false;
+		}
+	}
+	else{
+		return false;
+	}
+}
+
+// Check course code and name separated by a whitespace
+bool whitespacecheck(string input){
+	if (input.at(5) == ' '){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+// Check the first character of the input is 1, 2, 3 or 4
+bool numbercheck(string input){
+	if (input.at(0) == '1' || input.at(0) == '2' || input.at(0) == '3' || input.at(0) == '4'){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+// Check that the course name is at least 1 character long
+bool lengthcheck(string input){
+	if (input.length() > 6){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+// Comparator function to alphabetically sort strings from where the course title begins
+bool namesort(string a, string b){
+	a = a.substr(11);
+	b = b.substr(11);
+	return a < b;
+}
+
+int main(){
+	const string degree("PHYS ");
+	vector<string> coursevector;
+	string input;
+	string entry;
+	stringstream ss;
+	// Ask user to enter courses; stop when user enters x
+	do{
+		cout << "Please enter a 5-digit physics course code and name separated by a space, or x to finish: ";
+		getline(cin, input);
+		// Empty stringstream
+		ss.str("");
+		ss << degree << input;
+		entry.clear();
+		entry = ss.str();
+		cout << " " << endl;
+		// Only append valid inputs to vector
+		if (input != "x" && codecheck(input) && numbercheck(input) && lengthcheck(input) && whitespacecheck(input)){
+			coursevector.push_back(entry);
+		}
+	} while (input != "x");
+
+	if (!coursevector.empty()){
+		// Print list
+		cout << " " << endl;
+		cout << "List of courses you entered: " << endl;
+		cout << " " << endl;
+
+		for (vector<string>::iterator it = coursevector.begin(); it != coursevector.end(); it++){
+			cout << *it << endl;
+		}
+
+		cout << " " << endl;
+
+		// Ask how user would like to sort list
+		string sortchoice;
+		cout << "Would you like to sort courses by code or by name? (c/n) ";
+		cin >> sortchoice;
+		cout << " " << endl;
+		// Check input is valid
+		while (sortchoice != "c" && sortchoice != "n"){
+			cout << "Please try again: ";
+			cin.clear(); cin.ignore(100000, '\n'); cin >> sortchoice;
+		}
+
+		// Sorts list by course code number
+		if (sortchoice == "c"){
+			sort(coursevector.begin(), coursevector.end());
+			cout << " " << endl;
+			cout << "Your sorted list:" << endl;
+			cout << " " << endl;
+			for (vector<string>::iterator it = coursevector.begin(); it != coursevector.end(); it++){
+				cout << *it << endl;
+			}
+		}
+
+		// Sorts list alphabetically by title
+		else if (sortchoice == "n"){
+			sort(coursevector.begin(), coursevector.end(), namesort);
+			cout << " " << endl;
+			cout << "Your sorted list:" << endl;
+			cout << " " << endl;
+			for (vector<string>::iterator it = coursevector.begin(); it != coursevector.end(); it++){
+				cout << *it << endl;
+			}
+		}
+
+		// Asks user if they would like to see courses from a given year
+		string yesno;
+		cout << " " << endl;
+		cout << "Would you like to extract courses from a particular year? (y/n) ";
+		cin >> yesno;
+		cout << " " << endl;
+		// Check input is valid
+		while (yesno != "y" && yesno != "n"){
+			cout << "Please try again: ";
+			cin.clear(); cin.ignore(100000, '\n'); cin >> yesno;
+		}
+		cout << " " << endl;
+		if (yesno == "y"){
+			char year;
+			cout << "Enter a year: (1-4) ";
+			cin >> year;
+			cout << " " << endl;
+			// Check input is valid
+			while (year != '1' && year != '2' && year != '3' && year != '4'){
+				cout << "Please try again: ";
+				cin.clear(); cin.ignore(10000, '\n'); cin >> year;
+			}
+
+			// Adds elements from original vector to new vector if the first number of the course code matches the year given
+			vector<string> yearsortvector;
+			for (int i = 0; i < coursevector.size(); i++){
+				istringstream ss(coursevector[i]);
+				string line;
+				getline(ss, line);
+				// Fifth character of every vector element is the first number of the course code - first few characters taken up by PHYS
+				if (line.at(5) == year){
+					yearsortvector.push_back(coursevector[i]);
+				}
+			}
+
+			// Print new list of courses
+			cout << " " << endl;
+			cout << "The courses taken in year " << year << " are:" << endl;
+			cout << " " << endl;
+			for (vector<string>::iterator it = yearsortvector.begin(); it != yearsortvector.end(); it++){
+				cout << *it << endl;
+			}
+		}
+	}
+
+	cout << " " << endl;
+
+	return 0;
+}
