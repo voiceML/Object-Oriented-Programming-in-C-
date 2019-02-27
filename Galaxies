@@ -1,0 +1,164 @@
+// Demonstration of a C++ class using galaxies
+
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cmath>
+
+using namespace std;
+
+// Define galaxy class
+class galaxy{
+private:
+	vector<galaxy> satellitevector;
+	string type;
+	double redshift, totalMass, stellarMassFraction;
+
+public:
+	// Default constructor
+	galaxy() : type("Sa"), redshift(0.005), totalMass(1e9), stellarMassFraction(0.01) {};
+
+	// Parametrised constructor
+	galaxy(string a, double b, double c, double d) : type(a), redshift(b), totalMass(c), stellarMassFraction(d) {};
+
+	// Destructor
+	~galaxy() {};
+
+	// Function to compute stellar mass
+	double stellarMass(){return totalMass*stellarMassFraction;}
+
+	// Functions to extract galaxy values
+	string getType(){return type;}
+	double getRedshift(){return redshift;}
+	double getTotalMass(){return totalMass;}
+	double getStellarMassFraction(){return stellarMassFraction;}
+	vector<galaxy> getSatelliteGalaxies(){return satellitevector;}
+
+	// Functions to change galaxy values
+	void changeType(string newType){type = newType;}
+	void changeRedshift(double newRedshift){redshift = newRedshift;}
+	void changeTotalMass(double newTotalMass){totalMass = newTotalMass;}
+	void changeStellarMassFraction(double newStellarMassFraction){stellarMassFraction = newStellarMassFraction;}
+
+	// Prototype value-checking functions
+	bool checkType(); bool checkRedshift(); bool checkTotalMass(); bool checkStellarMassFraction(); bool totalCheck();
+
+	// Function to add satellite galaxies
+	void addSatellite(galaxy sg){
+		satellitevector.push_back(sg);
+	}
+
+	// Prototype print function
+	void printdata();
+
+};
+
+// 4 functions to check each of the galaxy inputs. Only galaxies with reasonable parameters will be added to galaxy vector
+bool galaxy::checkType(){
+	string type = getType();
+	if (type == "E0" || type == "E1" || type == "E2" || type == "E3" || type == "E4" || type == "E5" || \
+		type == "E6" || type == "E7" || type == "S0" || type == "Sa" || type == "Sb" || type == "Sc" || \
+		type == "SBa" || type == "SBb" || type == "SBc" || type == "Irr"){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+bool galaxy::checkRedshift(){
+	double redshift = getRedshift();
+	if (redshift <= 10 && redshift >= 0){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+bool galaxy::checkTotalMass(){
+	totalMass = getTotalMass();
+	if (totalMass <= 1e12 && totalMass >= 1e7){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+bool galaxy::checkStellarMassFraction(){
+	stellarMassFraction = getStellarMassFraction();
+	if (stellarMassFraction <= 0.05 && stellarMassFraction >= 0){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+
+// Condition that the 4 previous functions all satisfied - makes it quicker to add galaxies later
+bool galaxy::totalCheck(){
+	if (checkType() && checkRedshift() && checkTotalMass() && checkStellarMassFraction()){
+		return true;
+	}
+	else{
+		return false;
+	}
+}
+
+
+// Print function
+void galaxy::printdata(){
+	cout << "Galaxy [type, redshift, mass, stellar mass fraction]: [" << getType() << ", " << \
+		getRedshift() << ", " << getTotalMass() << " solar masses, " << getStellarMassFraction() << "]" << endl;
+	cout << "The stellar mass of this galaxy is " << stellarMass() << " solar masses." << endl;
+	cout << "The number of satellite galaxies of this galaxy is " << getSatelliteGalaxies().size() << "." << endl;
+	cout << " " << endl;
+	if (getSatelliteGalaxies().size() > 0){
+		cout << "The satellite galaxies of this galaxy are:" << endl;
+		for (int i = 0; i < getSatelliteGalaxies().size(); i ++){
+			vector<galaxy> v = getSatelliteGalaxies();
+			cout << "Satellite galaxy " << i + 1 << " : ";
+			v[i].printdata();
+		}
+	}
+	cout << " " << endl;
+}
+	
+
+int main(){
+
+	vector<galaxy> gvector;
+
+	galaxy g1;
+	galaxy g2("SBa", 5, 2e8, 0.01);
+
+	g1.changeType("Irr");
+
+	// Add satellite galaxies
+	galaxy s1g2("E0", 5, 1.5e7, 0.05);
+	if (s1g2.totalCheck()){
+		g2.addSatellite(s1g2);
+	}
+	galaxy s2g2("E1", 4, 1.2e7, 0.04);
+	if (s2g2.totalCheck()){
+		g2.addSatellite(s2g2);
+	}
+	
+	// Add galaxies to vector
+	if (g1.totalCheck()){
+		gvector.push_back(g1);
+	}
+	if (g2.totalCheck()){
+		gvector.push_back(g2);
+	}
+
+	// Iterate over vector and print galaxies
+	for (vector<galaxy>::iterator it = gvector.begin(); it != gvector.end(); it++){
+		it->printdata();
+	}
+
+	return 0;
+
+}
