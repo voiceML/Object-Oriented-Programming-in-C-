@@ -1,0 +1,151 @@
+// Demonstration of arrays and file streams using measurements of the charge of an electron
+
+#include <iostream>
+#include <iomanip>
+#include <string>
+#include <cmath>
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+
+// Function to test if number is an integer
+bool isInteger(double x){
+	if ((round(x) - x) == 0){
+		return false;
+	}
+	else{
+		return true;
+	}
+}
+
+// Function to test if number is in the correct range
+bool range(double x){
+	if (0 < x && x < 3){
+		return false;
+	}
+	else{
+		return true;
+	}
+}
+
+// Function to compute the mean of an array
+double average(double *arraydata, int N){
+	double sum = 0, mean;
+	for (int i = 0; i < N; i++){
+		sum += arraydata[i];
+	}
+	mean = sum / N;
+	return mean;
+}
+
+// Function to compute the standard deviation of an array
+double stdev(double *arraydata, int N){
+	double mean, sigma, sum = 0, sqrdifference;
+	mean = average(arraydata, N);
+	for (int i = 0; i < N; i++){
+		sqrdifference = pow((arraydata[i] - mean), 2);
+		sum += sqrdifference;
+	}
+	sigma = sqrt(sum / (N-1));
+	return sigma;
+}
+
+// Function to check if file line contains a string
+bool stringcheck(string line){
+	istringstream ss;
+	ss.str(line);
+	double num;
+	if (ss >> num){
+		return true;
+	}
+	else{
+		return false;
+	}
+
+}
+
+int main(){
+	// Define directory of data files
+	string savepath = "//nask.man.ac.uk/home$/c++ codes/Millikan/Debug/";
+
+	// Ask user to open file 1 or 2
+	double filenumber;
+	cout << "Would you like to open file 1 or file 2?" << endl;
+	cin >> filenumber;
+	// Check input is valid
+	while ( range(filenumber) || isInteger(filenumber) || cin.fail() || cin.get() != '\n' ){
+		cout << "Please choose either 1 or 2" << endl;
+		cin.clear(); cin.ignore(100000, '\n'); cin >> filenumber;
+	}
+
+	// Depending on input, create file label
+	string file;
+	if (filenumber == 1){
+		file = savepath + "millikan.dat";
+	}
+	else if (filenumber == 2){
+		file = savepath + "millikan2.dat";
+	}
+
+	cout << "File opened successfully." << endl;
+
+	// Read in file and terminate program if file cannot be opened/found
+	ifstream datafile(file);
+	if (!datafile.good()){
+		cout << "Error - file could not be opened" << endl;
+		exit(0);
+	}
+
+	// Determine number of valid entries in the data
+	int nEntries = 0;
+	string line;
+	while (getline(datafile, line)){
+		if (stringcheck(line)){
+			nEntries++;
+		}
+	}
+
+	cout << "Number of data points: " << nEntries << endl;
+	
+	// Return to beginning of file
+	datafile.clear();
+	datafile.seekg(0, ios::beg);
+
+	// Allocate memory to store the number of entries in the file
+	double* arraydata = new double[nEntries];
+	// Create an array of file data - excluding strings
+	int i = 0;
+	while (!datafile.eof()){
+		// Read file in line by line
+		getline(datafile, line);
+		// If line passes string check test, append it to array
+		if (stringcheck(line)){
+			arraydata[i] = stod(line);
+			i++;
+		}
+		else{
+			cout << "WARNING: invalid data found" << endl;
+		}
+	}
+	
+	// Compute mean, standard deviation and standard error
+	double mean, sigma, error;
+	mean = average(arraydata, nEntries);
+	sigma = stdev(arraydata, nEntries);
+	error = sigma / sqrt(nEntries);
+
+	// Free up memory
+	delete[] arraydata;
+	// Close filestream
+	datafile.close();
+
+
+
+	// Display results
+	cout.setf(ios::fixed, ios::floatfield);
+	cout << "The value of the electron charge is " << setprecision(4) << mean << " +- " << setprecision(4) << error << " e-19 Coulombs." << endl;
+	cout << "The standard deviation in this value is " << setprecision(4) << sigma << "." << endl;
+
+	return 0;
+}
