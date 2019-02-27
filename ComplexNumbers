@@ -1,0 +1,132 @@
+// Demonstration of classes and overloading with complex numbers
+
+#include <iostream>
+#include <cmath>
+
+using namespace std;
+
+class complex{
+	// Make overloaded istream and ostream operators friends of the class
+	friend ostream & operator << (ostream &os, const complex &z);
+	friend istream & operator >> (istream &is, complex &z);
+
+private:
+	// Initialise real and imaginary component variables
+	double re, im;
+
+public:
+	// Constructors and destructor
+	complex() : re(0), im(0) {};
+	complex(double r, double i) : re(r), im(i) {};
+	~complex() {};
+
+	// Functions to extract real and imaginary values
+	double getRe() const{ return re; }
+	double getIm() const{ return im; }
+
+	// Functions to set new real and imaginary values
+	void setRe(double newRe) { re = newRe; }
+	void setIm(double newIm) { im = newIm; }
+
+
+	// Function to return modulus
+	double modulus() const{
+		double r2 = pow(re, 2);
+		double i2 = pow(im, 2);
+		return sqrt(r2 + i2);
+	}
+
+	// Function to return argument
+	double argument() const{
+		return atan(im / re);
+	}
+
+	// Function to return complex conjugate
+	complex conjugate() const{
+		complex conj(re, (-1 * im));
+		return conj;
+	}
+
+
+	// 4 overloaded operators to perform addition, subtraction, multiplication and division of complex numbers
+	complex operator+(complex const &z) const{
+		complex sum(re + z.re, im + z.im);
+		return sum;
+	}
+
+	complex operator-(complex const &z) const{
+		complex diff(re - z.re, im - z.im);
+		return diff;
+	}
+
+	complex operator*(complex const &z) const{
+		double pRe = (re*z.re) - (im*z.im);
+		double pIm = (re*z.im) + (im*z.re);
+		complex product(pRe, pIm);
+		return product;
+	}
+
+	complex operator/(complex const &z) const{
+		double qRe = ((re*z.re) + (im*z.im)) / (pow(z.re, 2) + pow(z.im, 2));
+		double qIm = ((im*z.re) - (re*z.im)) / (pow(z.re, 2) + pow(z.im, 2));
+		complex quotient(qRe, qIm);
+		return quotient;
+	}
+};
+
+// Overloaded ostream which accepts complex numbers
+ostream & operator << (ostream &os, const complex &z){
+	if (z.im >= 0){
+		os << z.re << " + " << z.im << "i" << endl;
+		return os;
+	}
+	// Same formatting as above if imaginary part is negative
+	else if (z.im < 0){
+		os << z.re << " - " << (z.im - (2 * z.im)) << "i" << endl;
+		return os;
+	}
+}
+
+// Overloaded istream which accepts complex numbers; asks for real and imaginary parts separately
+istream & operator >> (istream &is, complex &z){
+	cout << "Enter real part: ";
+	is >> z.re;
+	cout << "Enter imaginary part: ";
+	is >> z.im;
+	return is;
+}
+
+int main(){
+	// Initialise two complex numbers
+	complex a, b;
+
+	cout << "Please enter an imaginary number z1." << endl;
+	cin >> a;
+	// Print data for complex number z1
+	cout << endl << "z1 = " << a;
+	cout << "Re{z1} = " << a.getRe() << endl;
+	cout << "Im{z1} = " << a.getIm() << endl;
+	cout << "|z1| = " << a.modulus() << endl;
+	cout << "arg(z1) = " << a.argument() << endl;
+	cout << "z1* = " << a.conjugate() << endl << endl;
+
+	cout << "Please enter a second imaginary number z2." << endl;
+	cin >> b;
+	// Print data for complex number z2 
+	cout << endl << "z2 = " << b;
+	cout << "Re{z2} = " << b.getRe() << endl;
+	cout << "Im{z2} = " << b.getIm() << endl;
+	cout << "|z2| = " << b.modulus() << endl;
+	cout << "arg(z2) = " << b.argument() << endl;
+	cout << "z2* = " << b.conjugate() << endl << endl;
+
+	// Prints results of addition, subtraction, multiplication and division
+	complex sum(a + b), difference(a - b), product(a * b), quotient(a / b);
+	cout << "z1 + z2 = " << sum << endl;
+	cout << "z1 - z2 = " << difference << endl;
+	cout << "z1 * z2 = " << product << endl;
+	cout << "z1 / z2 = " << quotient << endl;
+
+
+	return 0;
+}
