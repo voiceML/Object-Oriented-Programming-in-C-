@@ -1,0 +1,313 @@
+// A demonstration of deep copying and moving using a matrix class, with functions to add, subtract and multiply matrices and calculate determinants.
+
+#include<iostream>
+#include<stdlib.h>
+#include<cmath>
+
+using namespace std;
+
+class matrix{
+	friend ostream & operator<<(ostream &os, const matrix &mat);
+	friend istream & operator>>(istream &is, matrix &mat);
+private:
+	double *mdata;
+	int rows, columns;
+public:
+
+	// Default constructor
+	matrix(){ mdata = new double[4]; mdata[0] = 1; mdata[1] = 0; mdata[2] = 0; mdata[3] = 1; rows = columns = 2; }
+
+	// Parameterised constructor
+	matrix(int m, int n);
+
+	// Copy constructor
+	matrix(matrix &mat);
+
+	// Copy assignment operator
+	matrix & operator=(matrix &mat);
+
+	// Move constructor
+	matrix(matrix &&mat);
+
+	// Move assignment operator
+	matrix & operator=(matrix &&mat);
+
+	// Destructor
+	~matrix(){ delete[] mdata; }
+
+	// Functions to return the number of rows and columns of a matrix
+	int getRows() const{ return rows; }
+	int getCols() const{ return columns; }
+
+	// Functions to allow an element of the matrix data array to be called by mat(m, n), where m is the row and n is the column
+	int index(int m, int n) const{
+		if (m > 0 && m <= rows && n > 0 && n <= columns) return (n - 1) + (m - 1)*columns;
+		else{ cout << "Error: out of range." << endl; exit(1); }
+	}
+	double & operator()(int m, int n) const{ return mdata[index(m, n)]; }
+
+	// Function to set the value of an element of a matrix
+	void setElement(int m, int n, double value);
+
+
+	// Addition
+	matrix operator+(matrix const &mat) const;
+
+	// Subtraction
+	matrix operator-(matrix const &mat) const;
+
+	// Multiplication
+	matrix operator*(matrix const &mat) const;
+
+	// Minors
+	matrix minor(int m, int n) const;
+
+	// Determinant
+	double determinant() const;
+};
+
+// Parameterised constructor definition
+matrix::matrix(int m, int n){
+	int size = m*n;
+	rows = m; columns = n;
+	if (size < 1){
+		cout << "Error: trying to declare a matrix with size less than 1." << endl;
+		exit(1);
+	}
+	else{
+		mdata = new double[size];
+		for (int i = 0; i < size; i++){
+			mdata[i] = 0;
+		}
+	}
+}
+
+
+// Copy constructor definition
+matrix::matrix(matrix &mat){
+	mdata = 0; int size = mat.rows*mat.columns;
+	rows = mat.rows; columns = mat.columns;
+	if (size > 0){
+		mdata = new double[size];
+		for (int i = 0; i < size; i++){
+			mdata[i] = mat.mdata[i];
+		}
+	}
+	else{
+		cout << "Error: trying to declare a matrix with size less than 1." << endl;
+	}
+}
+
+//Copy assignment operator definition
+matrix & matrix::operator=(matrix &mat){
+	if (&mat == this) return *this;
+	else{
+		delete[] mdata; mdata = 0; rows = 0; columns = 0;
+	}
+	int size = mat.rows*mat.columns;
+	rows = mat.rows; columns = mat.columns;
+	if (size > 0){
+		mdata = new double[size];
+		for (int i = 0; i < size; i++){
+			mdata[i] = mat.mdata[i];
+		}
+	}
+	else{
+		cout << "Error: trying to declare a matrix with size less than 1." << endl;
+	}
+	return *this;
+}
+
+
+// Move constructor definition
+matrix::matrix(matrix &&mat){
+	cout << "Move constructor called." << endl;
+	rows = mat.rows; columns = mat.columns; mdata = mat.mdata;
+	mat.rows = mat.columns = 0;
+	mat.mdata = 0;
+}
+
+// Move assignment operator defintion
+matrix & matrix::operator=(matrix &&mat){
+	cout << "Move assignment operator called." << endl;
+	swap(rows, mat.rows); swap(columns, mat.columns);
+	swap(mdata, mat.mdata);
+	return *this;
+}
+
+
+// Set matrix element function
+void matrix::setElement(int m, int n, double value){
+	mdata[index(m, n)] = value;
+}
+
+
+// Addition function
+matrix matrix::operator+(matrix const &mat) const{
+	matrix sum(rows, columns);
+	int size = rows*columns;
+	for (int i = 0; i < size; i++){
+		sum.mdata[i] = mdata[i] + mat.mdata[i];
+	}
+	return sum;
+}
+
+// Subtraction function
+matrix matrix::operator-(matrix const &mat) const{
+	matrix diff(rows, columns);
+	int size = rows*columns;
+	for (int i = 0; i < size; i++){
+		diff.mdata[i] = mdata[i] - mat.mdata[i];
+	}
+	return diff;
+}
+
+// Multiplication function
+matrix matrix::operator*(matrix const &mat) const{
+	matrix product(rows, mat.columns);
+	for (int i = 0; i < rows; i++){
+		for (int j = 0; j < mat.columns; j++){
+			double sum = 0;
+			for (int k = 0; k < columns; k++){
+				sum = sum + (mdata[(i*columns) + k] * mat.mdata[(k*mat.columns) + j]);
+			}
+			product(i + 1, j + 1) = sum;
+		}
+	}
+	return product;
+}
+
+// Function to return matrix with mth row and nth column deleted
+matrix matrix::minor(int m, int n) const{
+	matrix submatrix(rows - 1, columns - 1);
+	int minor_row, minor_col;
+	for (int i = 1; i <= rows; i++){
+		minor_row = i;
+		if (i > m) minor_row--;
+		for (int j = 1; j <= columns; j++){
+			minor_col = j;
+			if (j > n) minor_col--;
+			if (i != m && j != n){
+				submatrix(minor_row, minor_col) = mdata[index(i, j)];
+			}
+		}
+	}
+	return submatrix;
+}
+
+// Recursive function to calculate determinant using minor function
+double matrix::determinant() const{
+	double det = 0;
+	matrix submatrix(rows - 1, columns - 1);
+	if (rows == 2){
+		det = ((mdata[0] * mdata[3]) - (mdata[1] * mdata[2]));
+		return det;
+	}
+	else{
+		for (int x = 1; x <= rows; x++){
+			matrix submatrix = minor(1, x);
+			det = det + (pow(-1, x - 1)*mdata[index(1, x)] * submatrix.determinant());
+		}
+	}
+	return det;
+}
+
+
+// Overloaded ostream to output matrices
+ostream & operator << (ostream &os, const matrix &mat){
+	for (int i = 1; i <= mat.rows; i++){
+		for (int j = 1; j <= mat.columns; j++){
+			os << mat(i, j) << " ";
+		}
+		os << endl;
+	}
+	return os;
+}
+
+// Overloaded istream to input matrices
+istream & operator >> (istream &is, matrix &mat){
+	cout << "Input the number of rows: ";
+	is >> mat.rows;
+	cout << "Input the number of columns: ";
+	is >> mat.columns;
+	mat.mdata = new double[mat.rows*mat.columns];
+	for (int i = 1; i <= mat.rows; i++){
+		cout << "Input row " << i << " of your matrix, with single spaces between the elements." << endl;
+		for (int j = 1; j <= mat.columns; j++){
+			is >> mat(i, j);
+		}
+	}
+	return is;
+}
+
+
+int main() {
+	// Istream demonstration
+	matrix m;
+	cout << "Input a matrix m." << endl;
+	cin >> m;
+	cout << endl << "Matrix m:" << endl << m << endl;
+	
+	// Declare some matrices
+	// Default constructor
+	matrix m0;
+	cout << "Default matrix m0:" << endl << m0 << endl;
+	
+	// Parameterised constructors
+	matrix m1(3, 2);
+	m1.setElement(1, 1, 1); m1.setElement(1, 2, 2); m1.setElement(2, 1, 3); m1.setElement(2, 2, 4); m1.setElement(3, 1, 5); m1.setElement(3, 2, 6);
+	cout << "Matrix m1:" << endl << m1 << endl;
+
+	matrix m2(2, 3);
+	m2.setElement(1, 1, 6); m2.setElement(1, 2, 5); m2.setElement(1, 3, 4); m2.setElement(2, 1, 3); m2.setElement(2, 2, 2); m2.setElement(2, 3, 1);
+	cout << "Matrix m2:" << endl << m2 << endl;
+
+	matrix m3(3, 3);
+	m3.setElement(1, 1, 3); m3.setElement(1, 2, 5); m3.setElement(1, 3, -2); m3.setElement(2, 1, 6); m3.setElement(2, 2, 1); m3.setElement(2, 3, 4);
+	m3.setElement(3, 1, -5); m3.setElement(3, 2, 0); m3.setElement(3, 3, 2);
+	cout << "Matrix m3:" << endl << m3 << endl << endl;
+
+	// Deep copy by assignment
+	matrix m4(3, 3);
+	cout << "Matrix m4:" << endl << m4 << endl;
+	m4 = m3;
+	cout << "Copying matrix m3 to m4." << endl << "Matrix m4:" << endl << m4 << endl;
+	m3.setElement(1, 1, 4);
+	cout << "Edited matrix m3:" << endl << m3 << endl;
+	cout << "Matrix m4:" << endl << m4 << endl;
+
+	// Deep copy using copy constructor
+	matrix m5(m1);
+	cout << "Creating new matrix m5 and copying m1 to m5." << endl << "Matrix m5:" << endl << m5 << endl;
+	m1.setElement(1, 1, 2);
+	cout << "Edited matrix m1:" << endl << m1 << endl;
+	cout << "Matrix m5:" << endl << m5 << endl << endl;
+
+	// Move by assignment
+	m5 = move(m2);
+	cout << "Moving m2 to m5 by assignment." << endl << "Matrix m5:" << endl << m5 << endl;
+
+	// Move by copy constructor
+	matrix m6(move(m1));
+	cout << "Moving m1 to m6 by move copy constructor." << endl << "Matrix m6:" << endl << m6 << endl << endl;
+	
+
+	matrix m7(2, 2);
+	m7.setElement(1, 1, 9); m7.setElement(1, 2, 11); m7.setElement(2, 1, 4); m7.setElement(2, 2, 16);
+	cout << "Matrix m7:" << endl << m7 << endl;
+
+	matrix m8(2, 2);
+	m8.setElement(1, 1, 14); m8.setElement(1, 2, 7.2); m8.setElement(2, 1, 5); m8.setElement(2, 2, 2);
+	cout << "Matrix m8:" << endl << m8 << endl;
+
+	// Demonstrate matrix arithmetic
+	cout << "m7 + m8 = " << endl << m7 + m8 << endl;
+	cout << "m7 - m8 = " << endl << m7 - m8 << endl;
+	cout << "m7 * m8 = " << endl << m7 * m8 << endl;
+	
+	cout << "The determinant of m7 = " << m7.determinant() << endl;
+	cout << "The determinant of m8 = " << m8.determinant() << endl;
+
+
+	return 0;
+}
