@@ -1,0 +1,426 @@
+// Demonstration of derived classes. Program calculates dot products of n-dimensional 4 vectors and Minkowski 4vectors, Lorentz-boosted 4vectors and the energy and momentum of particles.
+// Chloe Hutton
+// 20/03/19
+
+#include<iostream>
+#include<iomanip>
+#include<stdlib.h>
+#include<cmath>
+
+using namespace std;
+
+// Define n-dimensional vector class
+class nvector{
+
+	friend ostream & operator<<(ostream &os, const nvector &vec);
+
+protected:
+	int dimension;
+	double *vdata;
+
+public:
+	// Default constructor
+	nvector() { dimension = 3; vdata = new double[3]; vdata[0] = vdata[1] = vdata[2] = 0; }
+
+	// Parameterised constructor
+	nvector(int n);
+
+	// Copy constructor
+	nvector(nvector &vec);
+
+	// Copy assignment operator
+	nvector & operator=(nvector &vec);
+
+	// Move constructor
+	nvector(nvector &&vec);
+
+	// Move assignment operator
+	nvector & operator=(nvector &&vec);
+
+	// Destructor
+	~nvector() { delete[] vdata; }
+
+	// Function to return the dimension of a vector
+	int getDimension() const{ return dimension; }
+
+	// Accessing components of vector
+	int index(int component) const{
+		if (component > 0 && component <= dimension) return component - 1;
+		else{
+			cout << "Error: out of range." << endl; exit(1);
+		}
+	}
+	double & operator[](int component) const{ return vdata[index(component)]; }
+
+	// Function to compute dot product
+	double dotproduct(nvector const &vec);
+
+	// Function to multiply vector by a scalar
+	nvector scalarmultiplication(double scalar);
+
+	// Overload + operator for nvectors
+	nvector operator+(nvector const &vec) const;
+
+	// Check absolute value of a vector is less than 1
+	bool lessthan1(nvector &vec);
+
+};
+
+// Parameterised constructor definition
+nvector::nvector(int n){
+	if (n < 1){
+		cout << "Error: trying to declare vector with size less than 1." << endl; exit(1);
+	}
+	else{
+		dimension = n;
+		vdata = new double[n];
+		for (int i = 0; i < n; i++){
+			vdata[i] = 0;
+		}
+	}
+}
+
+// Copy constructor definition
+nvector::nvector(nvector &vec){
+	vdata = 0; int n = vec.dimension;
+	if (n > 0){
+		dimension = n;
+		vdata = new double[n];
+		for (int i = 0; i < n; i++){
+			vdata[i] = vec.vdata[i];
+		}
+	}
+	else{
+		cout << "Error: trying to declare vector with size less than 1." << endl; exit(1);
+	}
+}
+
+// Copy assignment operator definition
+nvector & nvector::operator=(nvector &vec){
+	if (&vec == this) return *this;
+	else{
+		delete[] vdata; vdata = 0; dimension = 0;
+	}
+	int n = vec.dimension;
+	if (n > 0){
+		dimension = n;
+		vdata = new double[n];
+		for (int i = 0; i < n; i++){
+			vdata[i] = vec.vdata[i];
+		}
+	}
+	else{
+		cout << "Error: trying to declare vector with size less than 1." << endl; exit(1);
+	}
+	return *this;
+}
+
+// Move constructor definition
+nvector::nvector(nvector &&vec){
+	dimension = vec.dimension; vdata = vec.vdata;
+	vec.dimension = 0; vec.vdata = 0;
+}
+
+// Move assignment operator definition
+nvector & nvector::operator=(nvector &&vec){
+	swap(dimension, vec.dimension); swap(vdata, vec.vdata);
+	return *this;
+}
+
+// Function to compute dot product of two vectors of the same dimension
+double nvector::dotproduct(nvector const &vec){
+	if (dimension = vec.dimension){
+		double result = 0;
+		for (int i = 0; i < dimension; i++){
+			result = result + (vdata[i] * vec.vdata[i]);
+		}
+		return result;
+	}
+	else{
+		cout << "Error: dot product can only be computed for vectors of the same dimension." << endl; exit(1);
+	}
+}
+
+// Function to right-multiply a vector by a scalar
+nvector nvector::scalarmultiplication(double scalar){
+	nvector result(dimension);
+	for (int i = 0; i < dimension; i++){
+		result.vdata[i] = scalar*vdata[i];
+	}
+	return result;
+}
+
+// Overloaded function to add vectors of the same length
+nvector nvector::operator+(const nvector &vec) const{
+	if (dimension == vec.dimension){
+		nvector sum(dimension);
+		for (int i = 0; i < dimension; i++){
+			sum.vdata[i] = vdata[i] + vec.vdata[i];
+		}
+		return sum;
+	}
+	else{
+		exit(1);
+	}
+}
+
+// Check absolute value of a vector is less than 1
+bool nvector::lessthan1(nvector &vec){
+	if (sqrt(vec.dotproduct(vec)) < 1) return true;
+	else return false;
+}
+
+// Overloaded ostream to output vectors
+ostream & operator<<(ostream &os, const nvector &vec){
+	os << "(";
+	for (int i = 1; i < vec.dimension; i++){
+		os << vec[i] << ", ";
+	}
+	os << vec[vec.dimension] << ")";
+	return os;
+}
+
+
+
+
+// Define Minkowski 4vector class
+class minkowski : public nvector{
+
+	friend ostream & operator<<(ostream &os, minkowski &vec4);
+
+public:
+	// Default constructor
+	minkowski() : nvector(4) {};
+
+	// Parameterised constructors
+	minkowski(double t, nvector r) : nvector(4) {
+		if (r.getDimension() == 3){
+			vdata[0] = t; vdata[1] = r[1]; vdata[2] = r[2]; vdata[3] = r[3];
+		}
+		
+	}
+	minkowski(double t, double x, double y, double z) : nvector(4) { vdata[0] = t; vdata[1] = x; vdata[2] = y; vdata[3] = z; }
+
+	// Copy constructor
+	minkowski(minkowski &vec4) : nvector(vec4) {}
+
+	// Copy assignment operator
+	minkowski & operator=(minkowski &vec4) {
+		nvector::operator=(vec4);
+		return *this;
+	}
+
+	// Move constructor
+	minkowski(minkowski &&vec4) : nvector(move(vec4)) {}
+
+	// Move assignment operator
+	minkowski & operator=(minkowski &&vec4) {
+		nvector::operator=(vec4);
+		return *this;
+	}
+
+	// Destructor
+	~minkowski() {}
+
+	// Function to take spatial part of minkowski 4vector and construct a 3 vector
+	nvector spatial();
+
+	// Function to compute dot product of 4vectors
+	double dotproduct(minkowski const &vec4);
+
+	// Function to return Lorentz-boosted 4vector
+	minkowski boost(nvector beta);
+
+};
+
+// Function to extract spatial component of 4 vector
+nvector minkowski::spatial(){
+	nvector space(3);
+	space[1] = vdata[1]; space[2] = vdata[2]; space[3] = vdata[3];
+	return space;
+}
+
+// Function to compute dot product of 4vectors
+double minkowski::dotproduct(minkowski const &vec4){
+	double result = (vdata[0] * vec4.vdata[0]) - (vdata[1] * vec4.vdata[1]) - (vdata[2] * vec4.vdata[2]) - (vdata[3] * vec4.vdata[3]);
+	return result;
+
+}
+
+// Function to return Lorentz-boosted 4vector
+minkowski minkowski::boost(nvector beta){
+	if (lessthan1(beta) == true){
+		double gamma = pow((1 - beta.dotproduct(beta)), -0.5);
+		double tprime = gamma*(vdata[0] - (beta.dotproduct(spatial())));
+		nvector rprime(3);
+		double scalar = ((gamma - 1) / beta.dotproduct(beta))*beta.dotproduct(spatial()) - (gamma*vdata[0]);
+		rprime = spatial() + beta.scalarmultiplication(scalar);
+
+		minkowski transform(tprime, rprime);
+		return transform;
+	}
+	else{ cout << "Error: velocities cannot exceed c." << endl; exit(1); }
+}
+
+// Overloaded ostream to output 4vectors
+ostream & operator<<(ostream &os, minkowski &vec4){
+	os << "(" << vec4[1] << ", " << vec4[2] << ", " << vec4[3] << ", " << vec4[4] << ")" << endl;
+	return os;
+}
+
+
+
+// Define particle class
+class particle{
+
+	friend ostream & operator<<(ostream &os, const particle &p);
+
+private:
+
+	double mass;
+	nvector beta;
+	minkowski position;
+
+public:
+
+	//Default constructor
+	particle() {};
+	// Parameterised constructor
+	particle(double m, nvector v, minkowski r) { mass = m; beta = v; position = r; }
+	// Destructor
+	~particle() {};
+
+	// Function to compute gamma
+	double LorentzFactor();
+
+	// Function to compute particle's momentum
+	nvector momentum();
+
+	// Function to compute particle's total energy
+	double energy();
+
+};
+
+double particle::LorentzFactor(){
+	if (beta.getDimension() == 3){
+		double gamma = pow((1 - beta.dotproduct(beta)), -0.5);
+		return gamma;
+	}
+	else{
+		cout << "Error: velocities cannot exceed c." << endl; exit(1);
+	}
+}
+
+nvector particle::momentum(){
+	nvector p(3);
+	double massgamma = LorentzFactor()*mass;
+	p = beta.scalarmultiplication(massgamma);
+	return p;
+}
+
+double particle::energy(){
+	double Esquared = momentum().dotproduct(momentum()) + pow(mass, 2);
+	double E = sqrt(Esquared);
+	return E;
+}
+
+ostream & operator<<(ostream &os, const particle &p){
+	os << "Particle has mass " << p.mass << " Mev/c2, velocity " << p.beta << "c and position " << p.position << endl;
+	return os;
+}
+
+
+
+int main(){
+	// Declare some vectors
+	// Default constructor
+	nvector v1;
+	cout << "Demonstration of n-dimensional vector class:" << endl << endl << "Default vector v1 = " << v1 << endl << endl;
+
+	// Parameterised constructor
+	nvector v2(3);
+	v2[1] = 3; v2[2] = 7; v2[3] = 11;
+	cout << "Parameterised vector v2 = " << v2 << endl << endl;
+
+	nvector v3(3);
+	v3[1] = 2; v3[2] = 19; v3[3] = 5;
+	cout << "Parameterised vector v3 = " << v3 << endl << endl;
+
+	// Demonstrate copy constructor
+	cout << "Demonstrating copy constructor." << endl;
+	nvector v4(v3);
+	cout << "Copying v3 to new vector v4." << endl << "v3 = " << v3 << endl << "v4 = " << v4 << endl;
+	v3[1] = -3; cout << "Vector v3 has been modified." << endl << "v3 = " << v3 << endl << "v4 = " << v4 << endl << endl;
+
+	// Demonstrate copy assignment operator
+	cout << "Demonstrating copy assignment operator." << endl;
+	nvector v5(3);
+	cout << "Default vector v5 = " << v5 << endl;
+	v5 = v2;
+	cout << "Copying v2 to v5." << endl << "v2 = " << v2 << endl << "v5 = " << v5 << endl;
+	v2[1] = -3; cout << "Vector v2 has been modified." << endl << "v2 = " << v2 << endl << "v5 = " << v5 << endl << endl;
+
+	// Demonstrate move constructor
+	cout << "Demonstrating move constructor." << endl;
+	nvector v6(move(v2));
+	cout << "Moving v2 to v6." << endl << "v6 = " << v6 << endl << endl;
+
+	// Demonstrate move assignment operator
+	cout << "Demonstrating move assignment operator." << endl;
+	v1 = move(v3);
+	cout << "Moving v3 to v1." << endl << "v1 = " << v1 << endl << endl;
+
+	// Demonstrate dot product function
+	cout << "v6.v1 = " << v6.dotproduct(v1) << endl << endl << endl;
+
+
+
+	// Demonstrate the same functions with the Minkowski 4vector class
+	minkowski m1;
+	cout << "Demonstration of a 4vector derived class: (working in natural units) " << endl << endl << "Default 4vector m1 (t, x, y, z) = " << m1 << endl;
+
+	minkowski m2(10, v1);
+	cout << "(t, r) parameterised 4vector m2 = " << m2 << endl;
+	
+	minkowski m3(10, 9, 8, 7);
+	cout << "(t, x, y, z) parameterised 4vector m3 = " << m3 << endl;
+
+	cout << "Demonstrating copy constructor." << endl;
+	minkowski m4(m1);
+	cout << "Copying m1 to new 4vector m4." << endl << "m1 = " << m1 << "m4 = " << m4 << endl;
+
+	cout << "Demonstrating copy assignment operator." << endl;
+	minkowski m5;
+	cout << "Default 4vector m5 = " << m5;
+	m5 = m3;
+	cout << "Copying m3 to m5." << endl << "m3 = " << m3 << "m5 = " << m5 << endl;
+
+	cout << "Demonstrating move constructor." << endl;
+	minkowski m6(move(m2));
+	cout << "Moving m2 to m6." << endl << "m6 = " << m6 << endl;
+
+	cout << "Demonstrating move assignment operator." << endl;
+	m3 = move(m6);
+	cout << "Moving m6 to m3." << endl << "m3 = " << m3 << endl;
+
+	// Demonstrate 4vector dot product
+	cout << "m5.m3 = " << m5.dotproduct(m3) << endl << endl;
+
+	// Demonstrate Lorentz boost
+	nvector v(3); v[1] = v[2] = v[3] = 0.3;
+	minkowski transform = m3.boost(v);
+	cout << "m3' with Lorentz boost " << v << " = " << transform << endl << endl << endl;
+
+
+
+	// Demonstration of particle class
+	particle electron(0.51, v, m3);
+	cout << electron;
+	cout << "Gamma factor = " << electron.LorentzFactor() << endl;
+	cout << "Particle momentum = " << electron.momentum() << " MeV/c" << endl;
+	cout << "Particle energy = " << electron.energy() << " MeV" << endl << endl;
+	
+	// Have I overridden dotproduct correctly?
+
+	return 0;
+}
